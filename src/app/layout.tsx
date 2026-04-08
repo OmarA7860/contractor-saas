@@ -5,9 +5,9 @@ import "./globals.css";
 export const maxDuration = 120;
 
 export const metadata: Metadata = {
-  title: "JobSite Estimate — Contractor dashboard",
+  title: "VoltVocal — Field Estimating",
   description:
-    "Record voice notes from the job site and turn them into professional PDF estimates.",
+    "Record voice notes on site and generate professional PDF estimates instantly.",
 };
 
 export default function RootLayout({
@@ -17,7 +17,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col font-sans bg-[#0E0E11] text-[#E4E4F0]">
+        {children}
+      </body>
     </html>
   );
 }

@@ -14,6 +14,15 @@ import {
 } from "@/lib/server/groq-estimate";
 import { checkRateLimit } from "@/lib/server/rate-limit";
 
+type SavedEstimate = {
+  id: string;
+  created_at: string;
+  total: number;
+  notes: string;
+  transcript: string;
+  line_items: EstimateResult["lineItems"];
+};
+
 async function rateLimitKey(prefix: string): Promise<string> {
   const h = await headers();
   const xff = h.get("x-forwarded-for");
@@ -42,6 +51,12 @@ function mapError(e: unknown): string {
       return "Could not parse the estimate. Try recording again with more detail.";
     case "INVALID_MODEL_OUTPUT":
       return "Invalid response from the model. Please try again.";
+    case "DB_INSERT_FAILED":
+      return "Could not save the estimate. Please try again.";
+    case "DB_DELETE_FAILED":
+      return "Could not delete the estimate. Please try again.";
+    case "DB_FETCH_FAILED":
+      return "Could not load saved estimates. Please refresh.";
     default:
       return "Something went wrong. Please try again.";
   }
@@ -49,16 +64,11 @@ function mapError(e: unknown): string {
 
 export async function transcribeAudioAction(
   formData: FormData,
-): Promise<
-  { ok: true; transcript: string } | { ok: false; error: string }
-> {
+): Promise<{ ok: true; transcript: string } | { ok: false; error: string }> {
   try {
     const key = await rateLimitKey("tr");
     if (!checkRateLimit(key)) {
-      return {
-        ok: false,
-        error: "Too many requests. Please wait a few minutes.",
-      };
+      return { ok: false, error: "Too many requests. Please wait a few minutes." };
     }
 
     const audio = formData.get("audio");
@@ -80,16 +90,11 @@ export async function transcribeAudioAction(
 
 export async function generateEstimateAction(
   transcript: string,
-): Promise<
-  { ok: true; estimate: EstimateResult } | { ok: false; error: string }
-> {
+): Promise<{ ok: true; estimate: EstimateResult } | { ok: false; error: string }> {
   try {
     const key = await rateLimitKey("est");
     if (!checkRateLimit(key)) {
-      return {
-        ok: false,
-        error: "Too many requests. Please wait a few minutes.",
-      };
+      return { ok: false, error: "Too many requests. Please wait a few minutes." };
     }
 
     const t = sanitizePlainText(transcript, { preserveNewlines: true });
@@ -100,6 +105,85 @@ export async function generateEstimateAction(
 
     const estimate = await estimateWithGroq(trimmed);
     return { ok: true, estimate };
+  } catch (e) {
+    return { ok: false, error: mapError(e) };
+  }
+}
+
+export async function saveEstimateAction(
+  transcript: string,
+  estimate: EstimateResult,
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  try {
+    const key = await rateLimitKey("save");
+    if (!checkRateLimit(key)) {
+      return { ok: false, error: "Too many requests. Please wait a few minutes." };
+    }
+
+    const { getSupabaseClient } = await import("@/lib/server/supabase");
+    const supabase = getSupabaseClient();
+
+    const cleanTranscript = truncateField(
+      sanitizePlainText(transcript, { preserveNewlines: true }),
+      LIMITS.transcript,
+    );
+
+    const { data, error } = await supabase
+      .from("estimates")
+      .insert({
+        transcript: cleanTranscript,
+        total: estimate.total,
+        notes: estimate.notes,
+        line_items: estimate.lineItems,
+      })
+      .select("id")
+      .single();
+
+    if (error) throw new Error("DB_INSERT_FAILED");
+    return { ok: true, id: data.id };
+  } catch (e) {
+    return { ok: false, error: mapError(e) };
+  }
+}
+
+export async function deleteEstimateAction(
+  id: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    if (!id || typeof id !== "string" || id.length > 100) {
+      return { ok: false, error: "Invalid estimate ID." };
+    }
+
+    const { getSupabaseClient } = await import("@/lib/server/supabase");
+    const supabase = getSupabaseClient();
+
+    const { error } = await supabase
+      .from("estimates")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw new Error("DB_DELETE_FAILED");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: mapError(e) };
+  }
+}
+
+export async function getEstimatesAction(): Promise<
+  { ok: true; estimates: SavedEstimate[] } | { ok: false; error: string }
+> {
+  try {
+    const { getSupabaseClient } = await import("@/lib/server/supabase");
+    const supabase = getSupabaseClient();
+
+    const { data, error } = await supabase
+      .from("estimates")
+      .select("id, created_at, total, notes, transcript, line_items")
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) throw new Error("DB_FETCH_FAILED");
+    return { ok: true, estimates: data ?? [] };
   } catch (e) {
     return { ok: false, error: mapError(e) };
   }

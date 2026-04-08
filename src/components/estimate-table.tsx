@@ -1,85 +1,103 @@
 "use client";
 
-import { Download } from "lucide-react";
+import { useState } from "react";
+import { Download, Save, Trash2 } from "lucide-react";
 import { downloadEstimatePdf } from "@/lib/estimate-pdf";
+import { saveEstimateAction } from "@/app/actions/estimate-actions";
 import { sanitizePlainText } from "@/lib/sanitize-ai-text";
 import type { EstimateResult } from "@/types/estimate";
 
-const money = new Intl.NumberFormat("en-US", {
+const money = new Intl.NumberFormat("en-CA", {
   style: "currency",
-  currency: "USD",
+  currency: "CAD",
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
 
 type Props = {
   estimate: EstimateResult;
-  /** Shown in the PDF header; falls back to NEXT_PUBLIC_COMPANY_NAME or "JobSite Estimate". */
   companyName?: string;
+  transcript?: string;
+  onDeleted?: () => void;
 };
 
-export function EstimateTable({ estimate, companyName }: Props) {
+export function EstimateTable({ estimate, companyName, transcript, onDeleted }: Props) {
   const { lineItems, total, notes } = estimate;
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  async function handleSave() {
+    if (!transcript) return;
+    setIsSaving(true);
+    setSaveError(null);
+    const result = await saveEstimateAction(transcript, estimate);
+    setIsSaving(false);
+    if (result.ok) {
+      setSaved(true);
+    } else {
+      setSaveError(result.error);
+    }
+  }
 
   return (
-    <div className="w-full overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-      <div className="border-b border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/80">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-700 dark:text-zinc-200">
-          Estimate summary
-        </h3>
-        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-          Line items from your voice note, with Expert Mode code- and
-          safety-informed recommendations per line.
-        </p>
+    <div className="w-full border border-[#22222A] bg-[#151518]">
+      {/* Panel header */}
+      <div className="flex items-center justify-between border-b border-[#22222A] bg-[#0E0E11] px-4 py-2">
+        <span className="text-[10px] font-bold tracking-[0.25em] text-[#8B8B99] uppercase font-mono">
+          Estimate Output
+        </span>
+        <span className="text-[10px] font-mono tracking-widest text-[#7B3FE4] uppercase">
+          ● Ready
+        </span>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[900px] border-collapse text-left text-sm">
           <thead>
-            <tr className="border-b border-zinc-200 bg-zinc-50/80 text-xs font-semibold uppercase tracking-wide text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400">
+            <tr className="border-b border-[#22222A] bg-[#0E0E11] text-[10px] font-bold tracking-[0.2em] uppercase text-[#8B8B99] font-mono">
               <th className="px-4 py-3">Description</th>
               <th className="px-4 py-3 text-right">Qty</th>
               <th className="px-4 py-3">Unit</th>
-              <th className="px-4 py-3 text-right">Unit price</th>
-              <th className="px-4 py-3 text-right">Line total</th>
-              <th className="min-w-[220px] px-4 py-3 normal-case">
+              <th className="px-4 py-3 text-right">Unit Price</th>
+              <th className="px-4 py-3 text-right">Line Total</th>
+              <th className="min-w-[220px] px-4 py-3 normal-case tracking-normal">
                 Recommendations
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+          <tbody className="divide-y divide-[#1C1C22]">
             {lineItems.length === 0 ? (
               <tr>
                 <td
                   colSpan={6}
-                  className="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400"
+                  className="px-4 py-8 text-center text-[#8B8B99] text-sm"
                 >
-                  No line items returned. Try adding more detail in your voice
-                  note.
+                  No line items returned. Try adding more detail in your recording.
                 </td>
               </tr>
             ) : (
               lineItems.map((row, i) => (
                 <tr
                   key={`${row.description}-${i}`}
-                  className="bg-white hover:bg-zinc-50/80 dark:bg-zinc-950 dark:hover:bg-zinc-900/40"
+                  className={i % 2 === 0 ? "bg-[#151518]" : "bg-[#0E0E11]"}
                 >
-                  <td className="max-w-[280px] px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
+                  <td className="max-w-[280px] px-4 py-3 font-medium text-[#E4E4F0]">
                     {sanitizePlainText(row.description)}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-zinc-800 dark:text-zinc-200">
+                  <td className="px-4 py-3 text-right tabular-nums font-mono text-[#E4E4F0]">
                     {row.quantity}
                   </td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                  <td className="px-4 py-3 text-[#B0B0BE]">
                     {sanitizePlainText(row.unit)}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-zinc-800 dark:text-zinc-200">
+                  <td className="px-4 py-3 text-right tabular-nums font-mono text-[#E4E4F0]">
                     {money.format(row.unitPrice)}
                   </td>
-                  <td className="px-4 py-3 text-right font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
+                  <td className="px-4 py-3 text-right font-bold tabular-nums font-mono text-[#E4E4F0]">
                     {money.format(row.lineTotal)}
                   </td>
-                  <td className="max-w-xs px-4 py-3 text-left text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+                  <td className="max-w-xs px-4 py-3 text-left text-xs leading-relaxed text-[#8B8B99]">
                     {sanitizePlainText(row.proRecommendation).trim() || "—"}
                   </td>
                 </tr>
@@ -87,28 +105,57 @@ export function EstimateTable({ estimate, companyName }: Props) {
             )}
           </tbody>
           <tfoot>
-            <tr className="border-t border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/60">
-              <td colSpan={6} className="px-4 py-3">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end sm:gap-6">
-                  <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-100 sm:mr-auto">
-                    Total estimate
+            <tr className="border-t-2 border-[#7B3FE4] bg-[#0E0E11]">
+              <td colSpan={6} className="px-4 py-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end sm:gap-4">
+                  <span className="text-xs font-bold tracking-[0.2em] text-[#8B8B99] uppercase font-mono sm:mr-auto">
+                    Total Estimate
                   </span>
-                  <div className="flex flex-col items-end gap-3 sm:flex-row sm:items-center sm:gap-4">
-                    <span className="text-lg font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-xl font-bold tabular-nums font-mono text-[#7B3FE4]">
                       {money.format(total)}
                     </span>
                     <button
                       type="button"
-                      onClick={() =>
-                        downloadEstimatePdf(estimate, { companyName })
-                      }
-                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 dark:focus-visible:ring-offset-zinc-950"
+                      onClick={() => downloadEstimatePdf(estimate, { companyName })}
+                      className="inline-flex items-center gap-2 border border-[#22222A] bg-[#151518] px-3 py-2 text-xs font-bold tracking-[0.1em] text-[#E4E4F0] uppercase transition hover:border-[#7B3FE4] hover:text-[#7B3FE4] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B3FE4] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E0E11]"
                     >
-                      <Download className="size-4 shrink-0" aria-hidden />
-                      Download PDF
+                      <Download className="size-3.5 shrink-0" aria-hidden />
+                      Export PDF
                     </button>
+                    {transcript && !saved && (
+                      <button
+                        type="button"
+                        onClick={() => void handleSave()}
+                        disabled={isSaving}
+                        className="inline-flex items-center gap-2 border border-[#7B3FE4] bg-[#7B3FE4] px-3 py-2 text-xs font-bold tracking-[0.1em] text-white uppercase transition hover:bg-[#6930cc] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B3FE4] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E0E11] disabled:opacity-50"
+                      >
+                        <Save className="size-3.5 shrink-0" aria-hidden />
+                        {isSaving ? "Saving…" : "Save"}
+                      </button>
+                    )}
+                    {transcript && saved && (
+                      <span className="text-xs font-bold tracking-[0.1em] text-[#7B3FE4] uppercase font-mono">
+                        ✓ Saved
+                      </span>
+                    )}
+                    {onDeleted && (
+                      <button
+                        type="button"
+                        onClick={onDeleted}
+                        className="inline-flex items-center gap-2 border border-red-800 bg-[#151518] px-3 py-2 text-xs font-bold tracking-[0.1em] text-red-400 uppercase transition hover:bg-red-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E0E11]"
+                      >
+                        <Trash2 className="size-3.5 shrink-0" aria-hidden />
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </div>
+                {saveError && (
+                  <p className="mt-2 text-right text-xs text-red-400 font-mono">
+                    {saveError}
+                  </p>
+                )}
               </td>
             </tr>
           </tfoot>
@@ -116,9 +163,9 @@ export function EstimateTable({ estimate, companyName }: Props) {
       </div>
 
       {notes.trim() ? (
-        <div className="whitespace-pre-wrap border-t border-zinc-200 px-4 py-3 text-sm text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
-          <span className="font-medium text-zinc-800 dark:text-zinc-200">
-            Notes:{" "}
+        <div className="whitespace-pre-wrap border-t border-[#22222A] bg-[#0E0E11] px-4 py-3 text-sm text-[#8B8B99]">
+          <span className="text-[10px] font-bold tracking-[0.2em] text-[#8B8B99] uppercase font-mono">
+            Notes —{" "}
           </span>
           {sanitizePlainText(notes, { preserveNewlines: true })}
         </div>

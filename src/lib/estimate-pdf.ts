@@ -6,9 +6,9 @@ import {
   sanitizeEstimateForPdfExport,
 } from "@/lib/sanitize-ai-text";
 
-const money = new Intl.NumberFormat("en-US", {
+const money = new Intl.NumberFormat("en-CA", {
   style: "currency",
-  currency: "USD",
+  currency: "CAD",
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });

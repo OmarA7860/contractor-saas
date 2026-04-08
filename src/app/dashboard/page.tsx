@@ -1,39 +1,50 @@
-import { ClipboardList } from "lucide-react";
 import { EstimateRecorder } from "@/components/estimate-recorder";
+import { SavedEstimates } from "@/components/saved-estimates";
 
 export default function DashboardPage() {
   return (
-    <div className="flex min-h-full flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
-      <header className="border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
-        <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 py-4 sm:px-6">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
-            <ClipboardList className="size-5" aria-hidden />
+    <div className="flex min-h-full flex-1 flex-col bg-[#0E0E11]">
+      <header className="border-b border-[#22222A] bg-[#151518]">
+        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3 sm:px-6">
+          <img
+            src="/voltvocal-logo.png"
+            alt="VoltVocal"
+            className="h-9 w-auto"
+          />
+          <div className="flex flex-col">
+            <span className="text-sm font-bold tracking-[0.2em] text-[#E4E4F0] uppercase">
+              VoltVocal
+            </span>
+            <span className="text-[10px] tracking-[0.15em] text-[#8B8B99] uppercase">
+              Field Estimating System
+            </span>
           </div>
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-              JobSite Estimate
-            </h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Voice notes → professional estimates
-            </p>
+          <div className="ml-auto flex items-center gap-2">
+            <span className="h-2 w-2 bg-[#7B3FE4]" />
+            <span className="text-[10px] tracking-widest text-[#7B3FE4] uppercase font-mono">
+              Online
+            </span>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center px-4 py-10 sm:px-6">
-        <section className="w-full space-y-2 text-center sm:text-left">
-          <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
-            Dashboard
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-8 sm:px-6 gap-10">
+        <section className="border-l-2 border-[#7B3FE4] pl-4">
+          <h2 className="text-xs font-bold tracking-[0.25em] text-[#7B3FE4] uppercase">
+            Input
           </h2>
-          <p className="text-zinc-600 dark:text-zinc-400">
-            Record what you see on site. Groq transcribes the audio and Llama
-            builds a structured estimate you can refine or export later.
+          <p className="mt-1 text-lg font-semibold tracking-tight text-[#E4E4F0]">
+            Voice Capture
+          </p>
+          <p className="mt-1 text-sm text-[#8B8B99]">
+            Record a site walkthrough. Groq/Whisper transcribes the audio,
+            Llama builds structured line items and totals.
           </p>
         </section>
 
-        <div className="mt-10 flex w-full justify-center">
-          <EstimateRecorder />
-        </div>
+        <EstimateRecorder />
+
+        <SavedEstimates />
       </main>
     </div>
   );
