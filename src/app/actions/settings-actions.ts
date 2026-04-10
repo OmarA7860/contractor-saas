@@ -7,6 +7,17 @@ export type ContractorProfile = {
   email: string;
 };
 
+function serializeError(e: unknown): string {
+  if (e instanceof Error) {
+    return JSON.stringify({ message: e.message, name: e.name, stack: e.stack });
+  }
+  try {
+    return JSON.stringify(e);
+  } catch {
+    return String(e);
+  }
+}
+
 export async function getContractorProfileAction(): Promise<
   { ok: true; profile: ContractorProfile | null } | { ok: false; error: string }
 > {
@@ -18,12 +29,15 @@ export async function getContractorProfileAction(): Promise<
       .select("company_name, license_number, phone, email")
       .limit(1)
       .maybeSingle();
-    if (error) throw new Error("DB_FETCH_FAILED");
+    if (error) throw error;
     return { ok: true, profile: data };
-  } catch {
+  } catch (e) {
+    console.error("[Profile action full error]:", serializeError(e));
     return { ok: false, error: "Could not load contractor profile." };
   }
 }
+
+const PROFILE_ID = "00000000-0000-0000-0000-000000000001";
 
 export async function saveContractorProfileAction(
   profile: ContractorProfile,
@@ -33,10 +47,20 @@ export async function saveContractorProfileAction(
     const supabase = getSupabaseClient();
     const { error } = await supabase
       .from("contractor_profile")
-      .upsert({ id: 1, ...profile }, { onConflict: "id" });
-    if (error) throw new Error("DB_UPSERT_FAILED");
+      .upsert(
+        {
+          id: PROFILE_ID,
+          company_name: profile.company_name,
+          license_number: profile.license_number,
+          phone: profile.phone,
+          email: profile.email,
+        },
+        { onConflict: "id" },
+      );
+    if (error) throw error;
     return { ok: true };
-  } catch {
+  } catch (e) {
+    console.error("[Profile action full error]:", serializeError(e));
     return { ok: false, error: "Could not save contractor profile." };
   }
 }

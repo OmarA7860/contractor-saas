@@ -45,6 +45,7 @@ export default function SettingsPage() {
     setSaved(false);
     setError(null);
     const res = await saveContractorProfileAction(form);
+    console.log("[Save result]:", res);
     setSaving(false);
     if (res.ok) setSaved(true);
     else setError(res.error);

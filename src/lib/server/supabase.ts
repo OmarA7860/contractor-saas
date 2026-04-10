@@ -13,7 +13,7 @@ type EstimateRow = {
 };
 
 type ContractorProfileRow = {
-  id: number;
+  id: string;
   company_name: string;
   license_number: string;
   phone: string;
@@ -51,19 +51,19 @@ type Database = {
 
 type SupabaseClient = ReturnType<typeof createClient<Database>>;
 
-let client: SupabaseClient | null = null;
-
 export function getSupabaseClient(): SupabaseClient {
-  if (client) return client;
-
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+  console.log("[Supabase] URL present:", !!url);
+  console.log("[Supabase] Key present:", !!key);
+
   if (!url || !key) {
+    console.error("[Supabase] Missing env vars:", { hasUrl: !!url, hasKey: !!key });
     throw new Error("CONFIG_MISSING");
   }
 
-  client = createClient<Database>(url, key, {
+  return createClient<Database>(url, key, {
     auth: { persistSession: false },
     global: {
       headers: {
@@ -71,6 +71,4 @@ export function getSupabaseClient(): SupabaseClient {
       },
     },
   });
-
-  return client;
 }
