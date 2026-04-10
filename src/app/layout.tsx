@@ -9,6 +9,10 @@ export const metadata: Metadata = {
   description:
     "Record voice notes on site and generate professional PDF estimates instantly.",
   manifest: "/manifest.json",
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -31,7 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased">
       <head>
-        <link rel="apple-touch-icon" href="/voltvocal-logo.png" />
+        <link rel="apple-touch-icon" href="/logo.png" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta

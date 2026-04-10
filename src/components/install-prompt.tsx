@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -65,7 +66,7 @@ export function InstallPrompt() {
       <div className="animate-fade-up mx-auto max-w-md rounded-2xl border border-[#2A4234] bg-[#0E1612]/95 p-4 shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-md">
         <div className="flex items-start gap-3">
           <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#3A8F5F]/15 ring-1 ring-[#3A8F5F]/30">
-            <img src="/voltvocal-logo.png" alt="" className="h-5 w-5 object-contain" />
+            <Image src="/logo.png" alt="" width={44} height={44} style={{ objectFit: 'contain' }} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-[#E0EDE5]">

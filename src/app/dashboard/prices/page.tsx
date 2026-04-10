@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Check, Pencil, Plus, Tag, Trash2, X } from "lucide-react";
 import {
   deletePriceItemAction,
@@ -99,9 +100,13 @@ export default function PricesPage() {
       <header className="sticky top-0 z-30 border-b border-[#1E3025] bg-[#090D0B]/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3 sm:px-6">
           <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#3A8F5F]/15 ring-1 ring-[#3A8F5F]/30">
-              <img src="/voltvocal-logo.png" alt="VoltVocal" className="h-5 w-5 object-contain" />
-            </div>
+            <Image
+              src="/logo.png"
+              alt="VoltVocal"
+              width={44}
+              height={44}
+              style={{ objectFit: 'contain' }}
+            />
             <div>
               <div className="text-sm font-bold tracking-widest text-[#E0EDE5] uppercase">VoltVocal</div>
               <div className="text-[9px] tracking-[0.18em] text-[#4A6857] uppercase">Field Estimating</div>
