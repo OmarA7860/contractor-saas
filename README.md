@@ -1,4 +1,4 @@
- VoltVocal 
+ VoltVocal:
                                                                                                                                         A field estimating SaaS for electrical contractors. Walk a job site, speak your observations, and get a structured, exportable      
   estimate in seconds — powered by AI.                                                                                                   
   **Workflow:** Record → Transcribe → Estimate → Export PDF                                                                           
